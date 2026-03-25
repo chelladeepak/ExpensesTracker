@@ -511,6 +511,9 @@ function App() {
   const [overviewYear, setOverviewYear] = useState(String(new Date().getFullYear()))
   const [adminPin, setAdminPin] = useState('')
   const [adminUnlocked, setAdminUnlocked] = useState(false)
+  const [showAdminPopup, setShowAdminPopup] = useState(false)
+  const [adminPopupPin, setAdminPopupPin] = useState('')
+  const [adminPopupError, setAdminPopupError] = useState('')
   const [shareStatus, setShareStatus] = useState('')
   const [pathname, setPathname] = useState(() => window.location.pathname)
 
@@ -1424,6 +1427,37 @@ function App() {
     window.alert('Invalid admin PIN')
   }
 
+  function openAdminPopup() {
+    setAdminPopupPin('')
+    setAdminPopupError('')
+    setShowAdminPopup(true)
+  }
+
+  function closeAdminPopup() {
+    setShowAdminPopup(false)
+    setAdminPopupPin('')
+    setAdminPopupError('')
+  }
+
+  function handleAdminPopupSubmit(event) {
+    event.preventDefault()
+
+    if (adminPopupPin !== ADMIN_PIN) {
+      setAdminPopupError('Invalid password. Please try again.')
+      return
+    }
+
+    if (!isAdminRoute) {
+      window.history.pushState({}, '', '/admin')
+      setPathname('/admin')
+    }
+
+    setAdminUnlocked(true)
+    setAdminPin('')
+    setActiveTab('manage')
+    closeAdminPopup()
+  }
+
   function handleDeletePerson(personId) {
     if (!requireAdminAccess()) return
 
@@ -1905,10 +1939,62 @@ function App() {
 
   return (
     <div className='app-shell'>
+      {showAdminPopup ? (
+        <div className='admin-popup-backdrop' role='presentation' onClick={closeAdminPopup}>
+          <div
+            className='admin-popup-card'
+            role='dialog'
+            aria-modal='true'
+            aria-labelledby='admin-popup-title'
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className='section-heading compact'>
+              <div>
+                <p className='section-kicker'>Admin access</p>
+                <h2 id='admin-popup-title'>Open admin panel</h2>
+                <p className='simple-helper-text'>Enter the admin password to navigate to the admin panel.</p>
+              </div>
+              <button className='secondary-button admin-popup-close' type='button' onClick={closeAdminPopup}>
+                Close
+              </button>
+            </div>
+
+            <form className='admin-popup-form' onSubmit={handleAdminPopupSubmit}>
+              <label>
+                Password
+                <input
+                  type='password'
+                  placeholder='Enter admin password'
+                  value={adminPopupPin}
+                  onChange={(event) => {
+                    setAdminPopupPin(event.target.value)
+                    if (adminPopupError) {
+                      setAdminPopupError('')
+                    }
+                  }}
+                  autoFocus
+                />
+              </label>
+
+              {adminPopupError ? <p className='popup-error-text'>{adminPopupError}</p> : null}
+
+              <button className='primary-button' type='submit'>
+                Go to admin panel
+              </button>
+            </form>
+          </div>
+        </div>
+      ) : null}
+
       <header className='hero-card'>
         <div>
           <p className='eyebrow'>Income & Expense Tracker</p>
-          <h1>Track salary, advance salary, income, and expenses in one place.</h1>
+          <div className='hero-title-row'>
+            <h1>Track salary, advance salary, income, and expenses in one place.</h1>
+            <button className='admin-hero-button' type='button' onClick={openAdminPopup}>
+              {isAdminRoute ? 'Admin panel' : 'Admin'}
+            </button>
+          </div>
           <p className='hero-copy'>
             Store all records in this React app for 365 days, manage people person wise, and review
             salary, income, expense, and admin analytics from one dashboard.

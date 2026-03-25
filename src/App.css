@@ -59,6 +59,28 @@ textarea {
   margin-bottom: 24px;
 }
 
+.hero-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-hero-button {
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-weight: 700;
+  background: rgba(175, 76, 15, 0.1);
+  color: var(--primary-dark);
+}
+
+.admin-hero-button:hover {
+  background: rgba(175, 76, 15, 0.16);
+}
+
 .eyebrow,
 .section-kicker {
   margin: 0 0 8px;
@@ -563,6 +585,137 @@ textarea:focus {
   font-size: 1.05rem;
 }
 
+.admin-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(45, 29, 19, 0.45);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+}
+
+.admin-popup-card {
+  width: min(100%, 520px);
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: 0 24px 50px rgba(45, 29, 19, 0.24);
+}
+
+.admin-popup-form {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-popup-close {
+  min-width: 96px;
+}
+
+.popup-error-text {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.single-overview-panel {
+  display: grid;
+  gap: 24px;
+}
+
+.single-overview-section {
+  display: grid;
+  gap: 18px;
+}
+
+.single-overview-content {
+  display: grid;
+  gap: 20px;
+}
+
+.single-overview-block {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border: 1px solid rgba(175, 76, 15, 0.14);
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 250, 220, 0.45), rgba(255, 255, 255, 0.96));
+}
+
+.single-overview-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(175, 76, 15, 0.28), transparent);
+}
+
+.overview-filter-note {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(175, 76, 15, 0.08);
+  color: var(--primary-dark);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid rgba(175, 76, 15, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 250, 220, 0.72);
+}
+
+.filter-toggle-button {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  background: transparent;
+  cursor: pointer;
+}
+
+.filter-toggle-button.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.people-table-wrap {
+  margin-top: 4px;
+}
+
+.people-overview-table {
+  min-width: 980px;
+}
+
+.table-select-button {
+  border: none;
+  padding: 0;
+  background: transparent;
+  color: var(--primary-dark);
+  font-weight: 800;
+  text-align: left;
+  cursor: pointer;
+}
+
+.table-select-button:hover {
+  text-decoration: underline;
+}
+
+.table-row-active {
+  background: rgba(175, 76, 15, 0.12) !important;
+}
+
+.table-action-button {
+  white-space: nowrap;
+}
+
 .expense-table-wrap {
   overflow-x: auto;
   border-radius: 20px;
@@ -702,188 +855,17 @@ textarea:focus {
     padding: 18px;
   }
 
-  .panel,
-  .hero-card,
-  .overview-card,
-  .summary-card,
-  .empty-state,
-  .admin-card {
-    padding: 18px;
+  .admin-popup-backdrop {
+    padding: 16px;
   }
 
-  .hero-stats,
-  .transaction-form,
-  .summary-grid-manage,
-  .summary-grid-wide,
-  .month-grid,
-  .admin-form,
-  .expense-share-meta {
-    grid-template-columns: 1fr;
+  .hero-title-row {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .admin-grid {
-    grid-template-columns: repeat(6, minmax(180px, 1fr));
-  }
-
-  .section-heading,
-  .record-row,
-  .person-select,
-  .person-meta {
-    display: grid;
-  }
-
-  .section-actions {
-    justify-content: stretch;
-  }
-
-  .section-actions > * {
+  .admin-hero-button {
     width: 100%;
-  }
-
-  .record-actions {
-    justify-items: start;
-  }
-}
-  font-size: 1.05rem;
-}
-
-.expense-table-wrap {
-  overflow-x: auto;
-  border-radius: 20px;
-  border: 1px solid rgba(175, 76, 15, 0.18);
-  background: #fffdf7;
-}
-
-.expense-share-table {
-  width: 100%;
-  min-width: 760px;
-  border-collapse: collapse;
-}
-
-.expense-share-table th,
-.expense-share-table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(175, 76, 15, 0.12);
-  text-align: left;
-  vertical-align: top;
-}
-
-.expense-share-table thead th {
-  background: linear-gradient(180deg, rgba(175, 76, 15, 0.1), rgba(255, 250, 220, 0.95));
-  color: var(--primary-dark);
-  font-size: 0.86rem;
-  font-weight: 800;
-}
-
-.expense-share-table tbody tr:nth-child(even) {
-  background: rgba(255, 250, 220, 0.35);
-}
-
-.expense-share-table tfoot td {
-  background: rgba(175, 76, 15, 0.08);
-  color: var(--primary-dark);
-  font-weight: 800;
-  border-bottom: none;
-}
-
-.payslip-table {
-  width: 100%;
-  border-collapse: collapse;
-  overflow: hidden;
-  border-radius: 18px;
-  border: 1px solid rgba(175, 76, 15, 0.18);
-  background: #fffdf7;
-}
-
-.payslip-table th,
-.payslip-table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(175, 76, 15, 0.14);
-  text-align: left;
-}
-
-.payslip-table thead th {
-  background: linear-gradient(180deg, rgba(175, 76, 15, 0.1), rgba(255, 250, 220, 0.9));
-  color: var(--primary-dark);
-  font-weight: 800;
-  text-align: center;
-}
-
-.payslip-table tbody tr:nth-child(even) {
-  background: rgba(255, 250, 220, 0.42);
-}
-
-.payslip-table tbody td:first-child {
-  width: 40%;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.payslip-table tbody td:last-child {
-  color: var(--primary-dark);
-  font-weight: 600;
-}
-
-.payslip-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.share-box {
-  min-height: 250px;
-  resize: vertical;
-  margin-top: 16px;
-}
-
-.status-text {
-  margin: 12px 0 0;
-}
-
-.large-empty {
-  min-height: 320px;
-  display: grid;
-  place-items: center;
-  text-align: center;
-}
-
-.compact-empty {
-  text-align: center;
-}
-
-@media (max-width: 1220px) {
-  .hero-card,
-  .view-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .summary-grid-wide,
-  .admin-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .summary-grid-wide {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .admin-grid {
-    grid-template-columns: repeat(6, minmax(180px, 1fr));
-  }
-
-  .month-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .expense-share-meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .admin-stat-card {
-    min-height: 0;
-  }
-}
-
-@media (max-width: 760px) {
-  .app-shell {
-    padding: 18px;
   }
 
   .panel,
