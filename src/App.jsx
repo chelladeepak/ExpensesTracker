@@ -1,9 +1,10 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
+import { isSupabaseConfigured, loadAppDataFromSupabase, saveAppDataToSupabase } from './lib/supabase'
 
 const STORAGE_KEY = 'salary-tracker-one-year'
 const ADMIN_PIN = '1234'
-const DEFAULT_COMPANY_NAME = 'Your Company Name'
+const DEFAULT_COMPANY_NAME = 'MANDUVA KITCHEN LLP'
 const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000
 
 const currencyFormatter = new Intl.NumberFormat('en-IN', {
@@ -516,17 +517,42 @@ function App() {
   const [adminPopupError, setAdminPopupError] = useState('')
   const [shareStatus, setShareStatus] = useState('')
   const [pathname, setPathname] = useState(() => window.location.pathname)
+  const [isDataReady, setIsDataReady] = useState(!isSupabaseConfigured)
+  const [syncError, setSyncError] = useState('')
 
   const isAdminRoute = pathname.toLowerCase().startsWith('/admin')
 
-  function syncFromStorage() {
-    const latest = loadStoredData()
+  const applyStoredSnapshot = useCallback((latest) => {
     setPersons(latest.persons)
     setEntries(latest.entries)
     setExpenses(latest.expenses)
     setIncomes(latest.incomes)
     setCompanyName(latest.companyName)
-  }
+  }, [])
+
+  const syncFromDataSource = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      applyStoredSnapshot(loadStoredData())
+      setIsDataReady(true)
+      setSyncError('')
+      return
+    }
+
+    try {
+      const remoteData = await loadAppDataFromSupabase()
+      const latest = pruneData(remoteData ?? loadStoredData())
+
+      applyStoredSnapshot(latest)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(latest))
+      setSyncError('')
+    } catch (error) {
+      console.error('Supabase sync failed. Falling back to local cache.', error)
+      applyStoredSnapshot(loadStoredData())
+      setSyncError('Supabase sync failed, so the app is using local browser data right now.')
+    } finally {
+      setIsDataReady(true)
+    }
+  }, [applyStoredSnapshot])
 
   useEffect(() => {
     const handleNavigation = () => {
@@ -549,18 +575,23 @@ function App() {
   }, [])
 
   useEffect(() => {
+    syncFromDataSource()
+  }, [syncFromDataSource])
+
+  useEffect(() => {
     const handleStorage = (event) => {
+      if (isSupabaseConfigured) return
       if (event.key && event.key !== STORAGE_KEY) return
-      syncFromStorage()
+      syncFromDataSource()
     }
 
     const handleWindowFocus = () => {
-      syncFromStorage()
+      syncFromDataSource()
     }
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        syncFromStorage()
+        syncFromDataSource()
       }
     }
 
@@ -573,12 +604,29 @@ function App() {
       window.removeEventListener('focus', handleWindowFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [])
+  }, [syncFromDataSource])
 
   useEffect(() => {
+    if (!isDataReady) return
+
     const cleaned = pruneData({ companyName, persons, entries, expenses, incomes })
     localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned))
-  }, [companyName, persons, entries, expenses, incomes])
+
+    if (!isSupabaseConfigured) return
+
+    const timeoutId = window.setTimeout(() => {
+      saveAppDataToSupabase(cleaned)
+        .then(() => {
+          setSyncError('')
+        })
+        .catch((error) => {
+          console.error('Supabase save failed. Local cache was updated instead.', error)
+          setSyncError('Could not save to Supabase. Your latest changes are still saved in this browser.')
+        })
+    }, 250)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [companyName, entries, expenses, incomes, isDataReady, persons])
 
   const normalizedSelectedPersonId = persons.some((person) => person.id === selectedPersonId)
     ? selectedPersonId
@@ -1785,6 +1833,11 @@ function App() {
   const showAdminTrackingTab = isAdminRoute
   const showAdminExpensesTab = isAdminRoute
   const showAdminAnalyticsTab = isAdminRoute
+  const syncStatusText = !isDataReady && isSupabaseConfigured
+    ? 'Syncing your tracker data from Supabase...'
+    : isSupabaseConfigured
+      ? 'Supabase cloud sync is enabled for this tracker.'
+      : 'Supabase is not configured yet. Add your keys in .env to enable cloud sync.'
 
   function renderExpenseShareTable(emptyMessage) {
     if (!selectedDateExpenses.length) {
@@ -2016,6 +2069,13 @@ function App() {
           </div>
         </div>
       </header>
+
+      <div className={`data-source-banner ${syncError ? 'warning' : ''}`}>
+        <span className={`pill ${isSupabaseConfigured && !syncError ? 'pill-success' : ''}`}>
+          {isSupabaseConfigured ? 'Supabase' : 'Local storage'}
+        </span>
+        <p>{syncError || syncStatusText}</p>
+      </div>
 
       <div className='page-tabs'>
         <button
@@ -2328,12 +2388,12 @@ function App() {
         </main>
       ) : activeTab === 'overview' ? (
         <main className='panel stack-gap single-overview-panel'>
-          <section className='single-overview-section stack-gap'>
-              <div className='section-heading'>
+          <div className='single-overview-block'>
+            <div className='section-heading'>
               <div>
                 <p className='section-kicker'>Salary overview</p>
                 <h2>All salary details in one card</h2>
-                <p className='simple-helper-text'>Use the month/year filter and select a row to view salary details, reports, and history in this single section.</p>
+                <p className='simple-helper-text'>Use the month/year filter and select a row to do all salary overview work inside this single card.</p>
               </div>
               <div className='section-actions'>
                 <div className='filter-toggle' role='group' aria-label='Overview filter mode'>
@@ -2456,9 +2516,9 @@ function App() {
                 </div>
               )}
             </div>
-          </section>
+          </div>
 
-          <section className='single-overview-section stack-gap'>
+          <div className='single-overview-block'>
             <div className='section-heading'>
               <div>
                 <p className='section-kicker'>Selected person</p>
@@ -2468,25 +2528,25 @@ function App() {
             </div>
 
             {selectedPerson ? (
-              <div className='single-overview-content stack-gap'>
-                <div className='summary-grid summary-grid-wide'>
-                  <article className='summary-card accent-card'>
+              <div className='single-overview-content'>
+                <div className='single-overview-stats'>
+                  <article className='single-overview-stat accent-card'>
                     <small>Monthly salary</small>
                     <strong>{formatCurrency(selectedPerson.monthlySalary)}</strong>
                   </article>
-                  <article className='summary-card'>
+                  <article className='single-overview-stat'>
                     <small>{overviewFilterMode === 'month' ? 'Month salary paid' : 'Year salary paid'}</small>
                     <strong>{formatCurrency(overviewPersonStats.salary)}</strong>
                   </article>
-                  <article className='summary-card'>
+                  <article className='single-overview-stat'>
                     <small>{overviewFilterMode === 'month' ? 'Month advance paid' : 'Year advance paid'}</small>
                     <strong>{formatCurrency(overviewPersonStats.advance)}</strong>
                   </article>
-                  <article className='summary-card'>
+                  <article className='single-overview-stat'>
                     <small>{overviewFilterMode === 'month' ? 'Month balance' : 'Year balance'}</small>
                     <strong>{formatCurrency(overviewBalanceAmount)}</strong>
                   </article>
-                  <article className='summary-card'>
+                  <article className='single-overview-stat'>
                     <small>Remaining days</small>
                     <strong>{overviewNextExpiryEntry ? `${getRemainingDays(overviewNextExpiryEntry.date)} days` : '365 days'}</strong>
                   </article>
@@ -2549,8 +2609,6 @@ function App() {
                   </div>
                 </div>
 
-                <div className='single-overview-divider' />
-
                 <div className='single-overview-block'>
                   <div className='section-heading compact'>
                     <div>
@@ -2585,8 +2643,6 @@ function App() {
 
                   {shareStatus ? <p className='status-text'>{shareStatus}</p> : null}
                 </div>
-
-                <div className='single-overview-divider' />
 
                 <div className='single-overview-block'>
                   <div className='section-heading compact'>
@@ -2652,11 +2708,11 @@ function App() {
                 <h3>Create or select a person</h3>
                 <p>
                   Use the first tab to add people and salary records, then come back here for the
-                  people list, year overview, and payslip view.
+                  people list, overview, payslip view, and transaction history in one card.
                 </p>
               </div>
             )}
-          </section>
+          </div>
         </main>
       ) : activeTab === 'expenses-entry' || activeTab === 'expenses-overview' ? (
         <main className='view-grid'>

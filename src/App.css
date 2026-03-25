@@ -625,7 +625,7 @@ textarea:focus {
 
 .single-overview-panel {
   display: grid;
-  gap: 24px;
+  gap: 20px;
 }
 
 .single-overview-section {
@@ -638,18 +638,52 @@ textarea:focus {
   gap: 20px;
 }
 
+.single-overview-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.single-overview-stat {
+  padding: 18px;
+  border: 1px solid rgba(175, 76, 15, 0.14);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fff9ec 100%);
+}
+
+.single-overview-stat strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.1rem;
+}
+
+.single-overview-panel .single-overview-section {
+  padding: 0;
+}
+
+.single-overview-panel .summary-card {
+  border-radius: 18px;
+  box-shadow: none;
+  padding: 18px;
+}
+
 .single-overview-block {
   display: grid;
   gap: 16px;
-  padding: 20px;
-  border: 1px solid rgba(175, 76, 15, 0.14);
-  border-radius: 20px;
-  background: linear-gradient(180deg, rgba(255, 250, 220, 0.45), rgba(255, 255, 255, 0.96));
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .single-overview-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(175, 76, 15, 0.28), transparent);
+}
+
+.single-overview-panel .expense-table-wrap,
+.single-overview-panel .payslip-table-wrap {
+  margin-top: 0;
 }
 
 .overview-filter-note {
@@ -829,6 +863,10 @@ textarea:focus {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .single-overview-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .summary-grid-wide {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -881,6 +919,7 @@ textarea:focus {
   .transaction-form,
   .summary-grid-manage,
   .summary-grid-wide,
+  .single-overview-stats,
   .month-grid,
   .admin-form,
   .expense-share-meta {
